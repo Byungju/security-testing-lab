@@ -1,71 +1,39 @@
-# security-testing-lab
+# product-security-lab
 
-## 1. 프로젝트 소개
+## 프로젝트 소개
 
-`security-testing-lab`은 보안 테스트(Security Testing)에 대한 학습, 연구, 실습을 수행하고
-보안 테스트 방법론과 프로세스를 체계적으로 정리하기 위한 프로젝트이다.
-이론 학습에 그치지 않고 통제된 환경에서 직접 실습하며, 반복 가능한 테스트 절차와
-보고 체계를 함께 만들어 가는 것을 지향한다.
+`product-security-lab`은 제품 보안 테스트(Product Security Testing)와 연구소 CERT의
+보안 테스트(Security Testing) 프로세스를 학습하고 정리하기 위한 프로젝트이다.
+현재는 구현 단계가 아니라, 보안 테스트 방법론을 학습하는 초기 단계이다.
 
-## 2. 프로젝트 목적
+## 현재 목표
 
-- 보안 테스트 기본 개념을 이해한다.
-- 보안 테스트 방법론과 표준을 연구한다.
-- 보안 테스트 프로세스를 이해하고 정립한다.
-- 다양한 보안 테스트 방법론을 비교한다.
-- 통제된 환경에서 보안 테스트를 실습한다.
-- 테스트 케이스와 체크리스트를 구축한다.
-- 테스트 결과와 보고서를 작성한다.
-- 제품 보안 테스트에 적용할 수 있는 기반을 구축한다.
-
-## 3. 다루는 영역
-
-이 프로젝트는 다음과 같은 보안 테스트 영역을 다루고 연구한다.
-
-- 보안 테스트 기본 개념
-- 취약점 평가
-- 침투 테스트
-- 웹 애플리케이션 보안 테스트
-- API 보안 테스트
-- 네트워크 보안 테스트
-- 보안 설정 검토
-- 보안 테스트 자동화
-- 테스트 결과 분석 및 보고
-
-## 4. 보안 테스트 방법론
-
-다음 방법론과 표준을 주요 연구 대상으로 삼는다.
+보안 테스트 방법론을 학습하고 서로 비교하는 것을 목표로 한다.
+첫 번째 학습 대상은 NIST SP 800-115이며, 이후 다음 방법론들을 비교하고 학습할 예정이다.
 
 - NIST SP 800-115
-- OWASP Web Security Testing Guide (WSTG)
-- OWASP Application Security Verification Standard (ASVS)
 - PTES (Penetration Testing Execution Standard)
+- OWASP Web Security Testing Guide (WSTG)
+- MITRE ATT&CK
 
-각 방법론의 상세한 내용은 README에서 다루지 않고, `docs/`에서 정리한다.
+## 연구 방향
 
-## 5. 연구 방향
-
-이 프로젝트가 추구하는 연구 방향은 다음과 같다.
+이 프로젝트가 추구하는 방향은 다음과 같다.
 
 ```text
-보안 테스트 기본 개념
+Security Testing Methodology Study
         ↓
-보안 테스트 방법론
+NIST SP 800-115
         ↓
-방법론 비교 및 분석
+Other Methodology Comparison
         ↓
-보안 테스트 프로세스
+Product Security Testing
         ↓
-보안 테스트 실습
-        ↓
-테스트 케이스 및 체크리스트
-        ↓
-테스트 보고서
-        ↓
-제품 보안 테스트
+Research Lab CERT Process
 ```
 
-## 6. 보안 테스트 원칙
+위 방향은 현재의 계획이며, 학습 결과에 따라 변경될 수 있다.
+
+## 보안 테스트 원칙
 
 모든 보안 테스트는 명시적으로 허가된 환경에서만 수행한다.
-허가되지 않은 시스템을 대상으로 한 테스트나 공격 목적의 내용은 이 저장소에서 다루지 않는다.
