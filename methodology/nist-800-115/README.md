@@ -38,40 +38,31 @@
 
 ### Section 2: Security Assessment
 
-보안 평가의 기본 방법론을 다룬다. 평가 방법과 기술적 평가 기법의 개념,
-테스트와 점검(Examination)의 비교, 그리고 평가를 바라보는 관점
-(외부/내부, 공개/비공개)을 설명한다.
+보안 평가의 기본 방법론을 다룬다. 평가 방법과 기술적 평가 기법의 개념, 테스트와 점검(Examination)의 비교, 그리고 평가를 바라보는 관점 (외부/내부, 공개/비공개)을 설명한다.
 
 ### Section 3: Review Techniques
 
-문서 검토, 로그 검토, 규칙(ruleset) 검토, 시스템 구성 검토, 네트워크 스니핑,
-파일 무결성 점검 등 검토(Review) 계열 기법을 설명한다.
+문서 검토, 로그 검토, 규칙(ruleset) 검토, 시스템 구성 검토, 네트워크 스니핑, 파일 무결성 점검 등 검토(Review) 계열 기법을 설명한다.
 
 ### Section 4: Target Identification and Analysis Techniques
 
-대상 식별과 분석을 위한 기법을 다룬다. 네트워크 탐색, 네트워크 포트와 서비스 식별,
-취약점 스캐닝, 무선 스캐닝 등을 설명한다.
+대상 식별과 분석을 위한 기법을 다룬다. 네트워크 탐색, 네트워크 포트와 서비스 식별, 취약점 스캐닝, 무선 스캐닝 등을 설명한다.
 
 ### Section 5: Target Vulnerability Validation Techniques
 
-식별된 취약점을 검증하는 기법을 다룬다. 패스워드 크래킹, 침투 테스트,
-소셜 엔지니어링 등을 설명한다.
+식별된 취약점을 검증하는 기법을 다룬다. 패스워드 크래킹, 침투 테스트, 소셜 엔지니어링 등을 설명한다.
 
 ### Section 6: Security Assessment Planning
 
-보안 평가를 계획하는 방법을 다룬다. 평가 정책 수립, 평가 우선순위와 일정,
-기법 선택과 조정, 평가 물류(인력, 장소, 도구), 평가 계획서 작성,
-법적 고려사항을 설명한다.
+보안 평가를 계획하는 방법을 다룬다. 평가 정책 수립, 평가 우선순위와 일정, 기법 선택과 조정, 평가 물류(인력, 장소, 도구), 평가 계획서 작성, 법적 고려사항을 설명한다.
 
 ### Section 7: Security Assessment Execution
 
-보안 평가를 실행하는 방법을 다룬다. 조정(Coordination), 평가 수행, 분석,
-그리고 데이터 수집·저장·전송·폐기와 같은 데이터 처리(Data Handling)를 설명한다.
+보안 평가를 실행하는 방법을 다룬다. 조정(Coordination), 평가 수행, 분석, 그리고 데이터 수집·저장·전송·폐기와 같은 데이터 처리(Data Handling)를 설명한다.
 
 ### Section 8: Post-Testing Activities
 
-평가 이후 활동을 다룬다. 완화 권고, 보고(Reporting), 재조치/완화(Remediation/Mitigation)를
-설명한다. 문서에서 보고는 이 Section의 하위 주제로 다룬다.
+평가 이후 활동을 다룬다. 완화 권고, 보고(Reporting), 재조치/완화(Remediation/Mitigation)를 설명한다. 문서에서 보고는 이 Section의 하위 주제로 다룬다.
 
 ## Appendix A ~ G
 
@@ -92,14 +83,11 @@
 - Assessment Methodologies
   - Section 2에서 보안 평가의 기본 방법론과 관점을 다룬다.
 - Technical Assessment Techniques
-  - Section 3(검토), Section 4(대상 식별·분석), Section 5(취약점 검증)에서
-    기술적 평가 기법을 다룬다. Appendix C, D도 관련 기법을 보완한다.
+  - Section 3(검토), Section 4(대상 식별·분석), Section 5(취약점 검증)에서 기술적 평가 기법을 다룬다. Appendix C, D도 관련 기법을 보완한다.
 - Assessment Process
-  - Section 6(Planning), Section 7(Execution), Section 8(Post-Testing)에서
-    평가를 수행하는 전체 과정을 다룬다.
+  - Section 6(Planning), Section 7(Execution), Section 8(Post-Testing)에서 평가를 수행하는 전체 과정을 다룬다.
 - Planning / Execution / Reporting
-  - Planning은 Section 6, Execution은 Section 7, Reporting은 Section 8의
-    하위 주제로 다룬다.
+  - Planning은 Section 6, Execution은 Section 7, Reporting은 Section 8의 하위 주제로 다룬다.
 
 ## 현재 학습에서 중요한 관찰점
 

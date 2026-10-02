@@ -1,0 +1,49 @@
+# DO-EXT-001 Network Reachability Identification 실행 Configuration (예제)
+# 실제 Target 정보가 제공되지 않았으므로 placeholder를 사용한다.
+# placeholder가 남아 있으면 Runner는 실행하지 않는다.
+
+execution_id: ""
+
+objective: DO-EXT-001
+test_case: TC-EXT-001-01
+procedure: TP-EXT-001-01
+
+target: "<TARGET>"
+target_type: linux-server
+assessment_perspective: external
+
+scope:
+  include:
+    - "<TARGET>"
+  exclude: []
+
+verification_methods:
+  - name: icmp
+    technique: ICMP-based reachability verification
+    tool: ping
+    options: ["-c", "4", "-W", "2"]
+    timeout_seconds: 15
+    enabled: true
+
+  - name: tcp
+    technique: TCP connectivity verification
+    tool: nc
+    target_port: "<PORT>"
+    options: ["-v", "-w", "3"]
+    timeout_seconds: 10
+    enabled: true
+
+  - name: path
+    technique: Network path observation (diagnostic)
+    tool: tracepath
+    options: []
+    timeout_seconds: 20
+    enabled: false
+
+evidence:
+  # 상대 경로는 execution/ 디렉터리를 기준으로 해석된다(Runner가 결정).
+  output_dir: results
+
+environment:
+  allowed_tools: [ping, nc, traceroute, tracepath]
+  allow_execution: false
