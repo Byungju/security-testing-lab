@@ -157,6 +157,16 @@ Evidence에 포함되는 정보: Execution ID, Target, Assessment Perspective, T
   - Runner는 이 결과로 Finding/Risk를 만들지 않는다.
 - summary.md에는 `Port State Summary`와 `Cross Verification` 섹션이 추가된다(해당 데이터가 있을 때만).
 
+### Port Re-verification (DO-EXT-002)
+
+광역/고속 스캔은 대상의 rate-limiting 등으로 일부 포트가 no-response로 관찰되어 누락(false negative)될 수 있다. 이를 보완하기 위해 후보 포트를 **저부하 타겟 확인**으로 재검증한다.
+
+- Verification Method: TCP port re-verification.
+- method `port_reverify`: `nmap -sT -Pn -n [options] -p <ports> <target>` (기본 타이밍), config의 `ports`만 스캔한다. 결과는 `ports`(포트별 상태)로 기록한다.
+- 권장 흐름: `tcp_scan`(port_range, 후보 발견) → `port_reverify`(후보 저부하 재확인) → `service_scan`(서비스 식별).
+- 스캔 타이밍/옵션은 Observation Condition으로 기록하며, 포트 상태는 시점/조건 의존 관찰로 취급한다.
+- config 예: `config/do-ext-002-reverify.yaml`.
+
 - Raw Output은 가능한 한 원본 그대로 보존하고, Verification Method별 디렉터리(`raw/icmp`, `raw/tcp`, `raw/path`)로 남긴다.
 - 기존 Evidence 저장 규칙(`results/<execution_id>/`)을 유지하며, 별도 중복 구조를 만들지 않는다.
 

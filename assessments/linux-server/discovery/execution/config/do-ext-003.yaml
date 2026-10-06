@@ -1,0 +1,39 @@
+# DO-EXT-003 Network Service Identification 실행 Configuration
+# Target: 192.168.216.39 (승인된 테스트 랩 대상)
+#
+# 입력: DO-EXT-002에서 open으로 관찰된 TCP 포트.
+# 검증 방식:
+#   service_scan : 지정된 ports에 대해 nmap -sV으로 서비스 종류 식별
+
+execution_id: ""
+
+objective: DO-EXT-003
+test_case: TC-EXT-003-01
+procedure: TP-EXT-003-01
+
+target: "192.168.216.39"
+target_type: linux-server
+assessment_perspective: external
+
+scope:
+  include:
+    - "192.168.216.39"
+  exclude: []
+
+verification_methods:
+  - name: service_scan
+    technique: Network service identification
+    tool: nmap
+    # DO-EXT-002에서 open으로 관찰된 포트(22, 23, 512) + 재확인으로 확인된 513, 514
+    ports: [22, 23, 512, 513, 514]
+    # 서비스 탐지가 느릴 수 있어 경량 버전 탐지와 여유 timeout을 사용한다.
+    options: ["--version-light"]
+    timeout_seconds: 300
+    enabled: true
+
+evidence:
+  output_dir: results
+
+environment:
+  allowed_tools: [nmap]
+  allow_execution: true

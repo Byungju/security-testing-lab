@@ -39,13 +39,29 @@ except ImportError:  # pragma: no cover
     print("PyYAML이 필요합니다. (pip install pyyaml)", file=sys.stderr)
     sys.exit(2)
 
-ALLOWED_METHODS = {"icmp", "tcp", "path", "tcp_scan", "tcp_connectivity"}
+ALLOWED_METHODS = {
+    "icmp",
+    "tcp",
+    "path",
+    "tcp_scan",
+    "tcp_connectivity",
+    "service_scan",
+    "port_reverify",
+}
 PORT_METHODS = {"tcp", "tcp_connectivity"}
+PORTS_LIST_METHODS = {"tcp", "tcp_connectivity", "service_scan", "port_reverify"}
+# 포트 목록을 스캔해 결과 라인을 파싱하는 method
+PORT_PARSE_METHODS = {"tcp_scan", "port_reverify"}
 PLACEHOLDER_MARKERS = ("<", ">", "TODO", "todo", "CHANGEME", "changeme")
 SHELL_METACHARS = (";", "|", "&", "$", "`", "\n", ">", "<")
 
 # nmap 출력에서 포트/프로토콜/상태 라인을 파싱한다(예: "22/tcp open ssh").
-NMAP_PORT_RE = re.compile(r"^(\d+)/(tcp|udp)\s+([a-z|]+)", re.MULTILINE)
+# 개행을 넘지 않도록 공백은 [ \t]만 사용한다.
+NMAP_PORT_RE = re.compile(r"^(\d+)/(tcp|udp)[ \t]+([a-z|]+)", re.MULTILINE)
+# nmap -sV 서비스 라인(예: "22/tcp open  ssh     OpenSSH 9.8 (protocol 2.0)").
+NMAP_SERVICE_RE = re.compile(
+    r"^(\d+)/(tcp|udp)[ \t]+([a-z|]+)[ \t]+(\S+)(?:[ \t]+(.*))?$", re.MULTILINE
+)
 
 # Tool별 버전 확인 명령. 지원하지 않는 옵션을 사용해 오류를 버전으로
 # 기록하지 않도록 Tool에 맞는 옵션을 지정한다.
@@ -230,7 +246,7 @@ def _validate_method(index: int, method: dict, allowed_tools: list) -> list[str]
             if any(ch in option for ch in SHELL_METACHARS):
                 errors.append(f"{prefix}.options contains a shell metacharacter: {option!r}")
 
-    if name in PORT_METHODS:
+    if name in PORTS_LIST_METHODS:
         ports = method.get("ports")
         if not isinstance(ports, list):
             errors.append(
@@ -248,6 +264,9 @@ def _validate_method(index: int, method: dict, allowed_tools: list) -> list[str]
             f"{prefix}: tcp_scan must use tool 'nmap' (port scanning); "
             "nc is a connectivity verification tool, not a port scanner"
         )
+
+    if name == "service_scan" and tool != "nmap":
+        errors.append(f"{prefix}: service_scan must use tool 'nmap'")
 
     return errors
 
@@ -333,6 +352,34 @@ def build_command(
             f"{port_range['start']}-{port_range['end']}",
             target,
         ]
+    if name == "service_scan":
+        ports = method.get("ports", [])
+        if not ports:
+            raise ValueError("service_scan requires ports")
+        return [
+            tool,
+            "-sV",
+            "-Pn",
+            "-n",
+            *options,
+            "-p",
+            ",".join(str(port) for port in ports),
+            target,
+        ]
+    if name == "port_reverify":
+        ports = method.get("ports", [])
+        if not ports:
+            raise ValueError("port_reverify requires ports")
+        return [
+            tool,
+            "-sT",
+            "-Pn",
+            "-n",
+            *options,
+            "-p",
+            ",".join(str(port) for port in ports),
+            target,
+        ]
     return [tool, *options, target]
 
 
@@ -376,6 +423,20 @@ def plan_items(config: dict) -> list[dict]:
                     "port": None,
                     "port_range": port_range,
                     "command": build_command(method, target, port_range=port_range),
+                    "timeout_seconds": method.get("timeout_seconds"),
+                }
+            )
+        elif name in ("service_scan", "port_reverify"):
+            step += 1
+            items.append(
+                {
+                    "step": step,
+                    "method": method,
+                    "name": name,
+                    "tool": method["tool"],
+                    "port": None,
+                    "port_range": None,
+                    "command": build_command(method, target),
                     "timeout_seconds": method.get("timeout_seconds"),
                 }
             )
@@ -459,6 +520,14 @@ def classify_observation(method: dict, returncode: int, stderr: str) -> str:
         if returncode == 0:
             return "port_scan_completed"
         return "scan_error"
+    if name == "service_scan":
+        if returncode == 0:
+            return "service_scan_completed"
+        return "scan_error"
+    if name == "port_reverify":
+        if returncode == 0:
+            return "port_reverify_completed"
+        return "scan_error"
     return "unknown"
 
 
@@ -490,6 +559,29 @@ def parse_nmap_state_counts(stdout_text: str) -> dict:
     for number, state in re.findall(r"(\d+)\s+([a-z|]+)\s+tcp ports", match.group(1)):
         counts[state] = counts.get(state, 0) + int(number)
     return counts
+
+
+def parse_nmap_services(stdout_text: str) -> list[dict]:
+    """nmap -sV 출력에서 (port, protocol, state, service, details) 목록을 파싱한다."""
+    services: list[dict] = []
+    seen: set[tuple[int, str]] = set()
+    for match in NMAP_SERVICE_RE.finditer(stdout_text or ""):
+        port = int(match.group(1))
+        protocol = match.group(2)
+        key = (port, protocol)
+        if key in seen:
+            continue
+        seen.add(key)
+        services.append(
+            {
+                "port": port,
+                "protocol": protocol,
+                "state": match.group(3),
+                "service": match.group(4),
+                "details": (match.group(5) or "").strip() or None,
+            }
+        )
+    return services
 
 
 def build_cross_verification(results: list[dict]) -> list[dict]:
@@ -561,6 +653,7 @@ def run_item(item: dict, target: str, raw_root: Path) -> dict:
         "port_range": item.get("port_range"),
         "scan_type": "connect" if (name == "tcp_scan" and "-sT" in command) else None,
         "ports": None,
+        "services": None,
         "command": command,
         "execution_conditions": {
             "options": method.get("options", []),
@@ -605,14 +698,18 @@ def run_item(item: dict, target: str, raw_root: Path) -> dict:
         stderr_text = completed.stderr or ""
 
     # Timeout/Error 시에는 부분 출력을 파싱하지 않는다(잘못된 포트 상태 방지).
-    if name == "tcp_scan" and record["execution_error"] is None:
+    if name in PORT_PARSE_METHODS and record["execution_error"] is None:
         parsed_ports = parse_nmap_ports(stdout_text)
         record["ports"] = parsed_ports
-        counts = parse_nmap_state_counts(stdout_text)
-        counts["open"] = sum(
-            1 for p in parsed_ports if str(p.get("state", "")).startswith("open")
-        )
-        record["port_state_counts"] = counts
+        if name == "tcp_scan":
+            counts = parse_nmap_state_counts(stdout_text)
+            counts["open"] = sum(
+                1 for p in parsed_ports if str(p.get("state", "")).startswith("open")
+            )
+            record["port_state_counts"] = counts
+
+    if name == "service_scan" and record["execution_error"] is None:
+        record["services"] = parse_nmap_services(stdout_text)
 
     stdout_file.write_text(stdout_text, encoding="utf-8")
     stderr_file.write_text(stderr_text, encoding="utf-8")
@@ -627,6 +724,8 @@ METHOD_LABELS = {
     "path": "Path",
     "tcp_scan": "TCP Scan",
     "tcp_connectivity": "TCP Connectivity",
+    "service_scan": "Service Scan",
+    "port_reverify": "TCP Re-verify",
 }
 OBSERVATION_LABELS = {
     "icmp_response_observed": "ICMP response observed",
@@ -638,6 +737,8 @@ OBSERVATION_LABELS = {
     "path_observed": "Path observed",
     "path_incomplete": "Path incomplete",
     "port_scan_completed": "port scan completed",
+    "service_scan_completed": "service scan completed",
+    "port_reverify_completed": "port re-verify completed",
     "scan_error": "scan error",
     "execution_timeout": "Execution timeout",
     "execution_error": "Execution error",
@@ -695,6 +796,20 @@ def render_summary(execution_result: dict, result_dir: Path) -> str:
     lines.append("| Step | Method | Technique | Tool | Port | Observation |")
     lines.append("| --- | --- | --- | --- | --- | --- |")
     for result in execution_result.get("results", []):
+        services = result.get("services")
+        if isinstance(services, list) and services:
+            for entry in services:
+                lines.append(
+                    "| {step} | {method} | {technique} | {tool} | {port} | {obs} |".format(
+                        step=result.get("step", "-"),
+                        method=_method_label(result.get("method", "")),
+                        technique=result.get("technique", "-"),
+                        tool=result.get("tool", "-"),
+                        port=entry.get("port", "-"),
+                        obs=entry.get("service", "-"),
+                    )
+                )
+            continue
         scan_ports = result.get("ports")
         if isinstance(scan_ports, list) and scan_ports:
             for entry in scan_ports:

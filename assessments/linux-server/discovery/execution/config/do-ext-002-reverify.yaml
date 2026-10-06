@@ -1,0 +1,35 @@
+# DO-EXT-002 Port Re-verification 실행 Configuration
+# 목적: DO-EXT-002의 후보 open 포트를 저부하 타겟 확인으로 재검증한다.
+#   port_reverify : nmap -sT (기본 타이밍)으로 지정 포트만 재확인
+
+execution_id: ""
+
+objective: DO-EXT-002
+test_case: TC-EXT-002-01
+procedure: TP-EXT-002-01
+
+target: "192.168.216.39"
+target_type: linux-server
+assessment_perspective: external
+
+scope:
+  include:
+    - "192.168.216.39"
+  exclude: []
+
+verification_methods:
+  - name: port_reverify
+    technique: TCP port re-verification
+    tool: nmap
+    # 후보 open 포트(22,23,512,513,514)를 저부하로 재확인
+    ports: [22, 23, 512, 513, 514]
+    options: []
+    timeout_seconds: 60
+    enabled: true
+
+evidence:
+  output_dir: results
+
+environment:
+  allowed_tools: [nmap]
+  allow_execution: true
