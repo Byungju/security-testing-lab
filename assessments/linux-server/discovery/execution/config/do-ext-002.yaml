@@ -1,0 +1,64 @@
+# DO-EXT-002 Network Port Identification 실행 Configuration
+# Target: 192.168.216.39 (승인된 테스트 랩 대상)
+#
+# 검증 방식:
+#   tcp_scan        : 지정된 port_range 전체에 대해 nmap으로 TCP Port State 식별
+#   tcp_connectivity: 명시된 ports에 대해 nc로 TCP 연결 관찰(보조/교차검증)
+#
+# port_range 는 Port Scan 대상이고, ports 는 nc Connectivity 대상이다. 의미를 혼동하지 않는다.
+
+execution_id: ""
+
+objective: DO-EXT-002
+test_case: TC-EXT-002-01
+procedure: TP-EXT-002-01
+
+target: "192.168.216.39"
+target_type: linux-server
+assessment_perspective: external
+
+scope:
+  include:
+    - "192.168.216.39"
+  exclude: []
+
+# TCP Port Scan 대상 범위 (단일 연속 범위만 지원)
+# 전 범위(1-65535). filtered 포트 대기로 기본 타이밍은 수 시간이 걸리므로
+# 공격적 타이밍 옵션을 사용한다. 속도와 완전성의 trade-off가 있으며
+# 사용 옵션은 Evidence(execution_conditions/command)에 기록된다.
+port_range:
+  start: 1
+  end: 65535
+
+verification_methods:
+  - name: tcp_scan
+    technique: TCP port scanning
+    tool: nmap
+    options:
+      - "-T4"
+      - "--max-retries"
+      - "1"
+      - "--min-rate"
+      - "1000"
+      - "--max-rtt-timeout"
+      - "300ms"
+      - "--initial-rtt-timeout"
+      - "300ms"
+    timeout_seconds: 600
+    enabled: true
+
+  - name: tcp_connectivity
+    technique: TCP connectivity verification
+    tool: nc
+    # nc Connectivity 확인 대상(명시적으로 지정). 비어 있으면 미실행.
+    ports: [22, 443]
+    options: ["-v", "-w", "3"]
+    timeout_seconds: 10
+    enabled: true
+
+evidence:
+  output_dir: results
+
+environment:
+  allowed_tools: [nmap, nc]
+  allow_execution: true

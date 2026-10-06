@@ -74,6 +74,8 @@ network
 
 - TC-EXT-001-01 Network Reachability Verification.
 - TP-EXT-001-01 Network Reachability Verification Procedure.
+- TC-EXT-002-01 Network Port Identification (TCP) — 지정 포트 TCP Connectivity 보조/교차검증.
+- TP-EXT-002-01 Network Port Identification (TCP) Procedure.
 
 ## References
 

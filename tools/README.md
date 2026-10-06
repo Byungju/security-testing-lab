@@ -162,4 +162,6 @@ tools/network/ping.md
 | --- | --- | --- | --- |
 | ping | network | `network/ping.md` | Candidate |
 | nc | network | `network/nc.md` | Candidate |
-| traceroute | network | `network/traceroute.md` | Candidate |
+| tracepath | network | `network/tracepath.md` | Candidate |
+| traceroute | network | `network/traceroute.md` | Candidate (현재 미사용, 대체: tracepath) |
+| nmap | network | `network/nmap.md` | Candidate (DO-EXT-002 주 대상) |

@@ -1,6 +1,5 @@
-# DO-EXT-001 Network Reachability Identification 실행 Configuration (예제)
-# 실제 Target 정보가 제공되지 않았으므로 placeholder를 사용한다.
-# placeholder가 남아 있으면 Runner는 실행하지 않는다.
+# DO-EXT-001 Network Reachability Identification 실행 Configuration
+# Target: 192.168.216.39 (승인된 테스트 랩 대상)
 #
 # 검증 방식의 의미:
 #   icmp: 주 Reachability 검증 (ICMP 기반)
@@ -14,13 +13,13 @@ objective: DO-EXT-001
 test_case: TC-EXT-001-01
 procedure: TP-EXT-001-01
 
-target: "<TARGET>"
+target: "192.168.216.39"
 target_type: linux-server
 assessment_perspective: external
 
 scope:
   include:
-    - "<TARGET>"
+    - "192.168.216.39"
   exclude: []
 
 verification_methods:
@@ -35,23 +34,21 @@ verification_methods:
     technique: TCP connectivity verification
     tool: nc
     # 비어 있으면 TCP 검증을 실행하지 않는다(임의 포트 선택/스캔 금지).
-    # 예: [22, 443]
-    ports: []
+    ports: [22,8443]
     options: ["-v", "-w", "3"]
     timeout_seconds: 10
-    enabled: false
+    enabled: true
 
   - name: path
     technique: Network path observation (diagnostic)
     tool: tracepath
     options: []
     timeout_seconds: 20
-    enabled: false
+    enabled: true 
 
 evidence:
-  # 상대 경로는 execution/ 디렉터리를 기준으로 해석된다(Runner가 결정).
   output_dir: results
 
 environment:
   allowed_tools: [ping, nc, tracepath]
-  allow_execution: false
+  allow_execution: true
