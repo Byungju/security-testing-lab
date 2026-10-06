@@ -47,9 +47,18 @@ ALLOWED_METHODS = {
     "tcp_connectivity",
     "service_scan",
     "port_reverify",
+    "version_scan",
 }
 PORT_METHODS = {"tcp", "tcp_connectivity"}
-PORTS_LIST_METHODS = {"tcp", "tcp_connectivity", "service_scan", "port_reverify"}
+PORTS_LIST_METHODS = {
+    "tcp",
+    "tcp_connectivity",
+    "service_scan",
+    "port_reverify",
+    "version_scan",
+}
+# 서비스/버전 상세(details)를 파싱하는 method
+SERVICE_PARSE_METHODS = {"service_scan", "version_scan"}
 # 포트 목록을 스캔해 결과 라인을 파싱하는 method
 PORT_PARSE_METHODS = {"tcp_scan", "port_reverify"}
 PLACEHOLDER_MARKERS = ("<", ">", "TODO", "todo", "CHANGEME", "changeme")
@@ -380,6 +389,23 @@ def build_command(
             ",".join(str(port) for port in ports),
             target,
         ]
+    if name == "version_scan":
+        ports = method.get("ports", [])
+        if not ports:
+            raise ValueError("version_scan requires ports")
+        # --version-all은 tcpwrapped/무응답 포트에서 매우 오래 걸리므로
+        # 경량 버전 탐지를 기본으로 사용한다(옵션으로 조정 가능).
+        return [
+            tool,
+            "-sV",
+            "--version-light",
+            "-Pn",
+            "-n",
+            *options,
+            "-p",
+            ",".join(str(port) for port in ports),
+            target,
+        ]
     return [tool, *options, target]
 
 
@@ -426,7 +452,7 @@ def plan_items(config: dict) -> list[dict]:
                     "timeout_seconds": method.get("timeout_seconds"),
                 }
             )
-        elif name in ("service_scan", "port_reverify"):
+        elif name in ("service_scan", "port_reverify", "version_scan"):
             step += 1
             items.append(
                 {
@@ -527,6 +553,10 @@ def classify_observation(method: dict, returncode: int, stderr: str) -> str:
     if name == "port_reverify":
         if returncode == 0:
             return "port_reverify_completed"
+        return "scan_error"
+    if name == "version_scan":
+        if returncode == 0:
+            return "version_scan_completed"
         return "scan_error"
     return "unknown"
 
@@ -708,7 +738,7 @@ def run_item(item: dict, target: str, raw_root: Path) -> dict:
             )
             record["port_state_counts"] = counts
 
-    if name == "service_scan" and record["execution_error"] is None:
+    if name in SERVICE_PARSE_METHODS and record["execution_error"] is None:
         record["services"] = parse_nmap_services(stdout_text)
 
     stdout_file.write_text(stdout_text, encoding="utf-8")
@@ -726,6 +756,7 @@ METHOD_LABELS = {
     "tcp_connectivity": "TCP Connectivity",
     "service_scan": "Service Scan",
     "port_reverify": "TCP Re-verify",
+    "version_scan": "Version Scan",
 }
 OBSERVATION_LABELS = {
     "icmp_response_observed": "ICMP response observed",
@@ -739,6 +770,7 @@ OBSERVATION_LABELS = {
     "port_scan_completed": "port scan completed",
     "service_scan_completed": "service scan completed",
     "port_reverify_completed": "port re-verify completed",
+    "version_scan_completed": "version scan completed",
     "scan_error": "scan error",
     "execution_timeout": "Execution timeout",
     "execution_error": "Execution error",
@@ -798,7 +830,12 @@ def render_summary(execution_result: dict, result_dir: Path) -> str:
     for result in execution_result.get("results", []):
         services = result.get("services")
         if isinstance(services, list) and services:
+            is_version = result.get("method") == "version_scan"
             for entry in services:
+                if is_version:
+                    obs = entry.get("details") or entry.get("service") or "-"
+                else:
+                    obs = entry.get("service", "-")
                 lines.append(
                     "| {step} | {method} | {technique} | {tool} | {port} | {obs} |".format(
                         step=result.get("step", "-"),
@@ -806,7 +843,7 @@ def render_summary(execution_result: dict, result_dir: Path) -> str:
                         technique=result.get("technique", "-"),
                         tool=result.get("tool", "-"),
                         port=entry.get("port", "-"),
-                        obs=entry.get("service", "-"),
+                        obs=obs,
                     )
                 )
             continue

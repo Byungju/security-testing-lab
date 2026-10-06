@@ -1,0 +1,37 @@
+# DO-EXT-004 Application and Version Identification 실행 Configuration
+# Target: 192.168.216.39 (승인된 테스트 랩 대상)
+#
+# 입력: DO-EXT-003에서 식별된 서비스 포트(22,23,512,513,514).
+# 검증 방식:
+#   version_scan : 지정된 ports에 대해 nmap -sV --version-light로 애플리케이션/버전 식별
+
+execution_id: ""
+
+objective: DO-EXT-004
+test_case: TC-EXT-004-01
+procedure: TP-EXT-004-01
+
+target: "192.168.216.39"
+target_type: linux-server
+assessment_perspective: external
+
+scope:
+  include:
+    - "192.168.216.39"
+  exclude: []
+
+verification_methods:
+  - name: version_scan
+    technique: Application and version identification
+    tool: nmap
+    ports: [22, 23, 512, 513, 514]
+    options: []
+    timeout_seconds: 300
+    enabled: true
+
+evidence:
+  output_dir: results
+
+environment:
+  allowed_tools: [nmap]
+  allow_execution: true
