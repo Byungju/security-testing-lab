@@ -167,6 +167,15 @@ Evidence에 포함되는 정보: Execution ID, Target, Assessment Perspective, T
 - 스캔 타이밍/옵션은 Observation Condition으로 기록하며, 포트 상태는 시점/조건 의존 관찰로 취급한다.
 - config 예: `config/do-ext-002-reverify.yaml`.
 
+### External Discovery Pipeline (DO-EXT-001..004)
+
+한 번의 실행으로 External Discovery Objective를 순서대로 수행하고 결과를 통합한다.
+
+- config 예: `config/external-discovery.yaml`.
+- method 순서 예: `icmp` → `port_reverify` → `service_scan` → `version_scan` → `tcp_scan`. rate-limit 간섭을 줄이기 위해 저부하 타겟 검증을 먼저, 공격적 전체 스캔을 마지막에 둔다.
+- 실행 결과에 `attack_surface`(포트 중심 통합 관찰)가 포함되고, summary에 `## Attack Surface (Observation)` 섹션이 추가된다.
+- `attack_surface`는 `tcp_scan`/`port_reverify`(상태) + `service_scan`(서비스) + `version_scan`(애플리케이션/버전)을 포트 기준으로 결합한 **관찰**이며, 보안 판단이 아니다.
+
 - Raw Output은 가능한 한 원본 그대로 보존하고, Verification Method별 디렉터리(`raw/icmp`, `raw/tcp`, `raw/path`)로 남긴다.
 - 기존 Evidence 저장 규칙(`results/<execution_id>/`)을 유지하며, 별도 중복 구조를 만들지 않는다.
 

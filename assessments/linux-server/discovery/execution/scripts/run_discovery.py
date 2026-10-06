@@ -654,6 +654,49 @@ def build_cross_verification(results: list[dict]) -> list[dict]:
     return cross
 
 
+def build_attack_surface(results: list[dict]) -> list[dict]:
+    """External Discovery 결과를 포트 중심으로 통합한 관찰(Attack Surface)을 만든다.
+
+    tcp_scan/port_reverify(포트 상태) + service_scan(서비스) +
+    version_scan(애플리케이션/버전)을 포트 기준으로 결합한다.
+    이는 관찰 통합이며 보안 판단이 아니다.
+    """
+    state_by_port: dict[int, str] = {}
+    service_by_port: dict[int, str] = {}
+    app_by_port: dict[int, str] = {}
+
+    for result in results:
+        method = result.get("method")
+        if method in ("tcp_scan", "port_reverify") and isinstance(result.get("ports"), list):
+            for entry in result["ports"]:
+                state_by_port[entry.get("port")] = entry.get("state")
+        elif method == "service_scan" and isinstance(result.get("services"), list):
+            for entry in result["services"]:
+                service_by_port[entry.get("port")] = entry.get("service")
+        elif method == "version_scan" and isinstance(result.get("services"), list):
+            for entry in result["services"]:
+                service_by_port.setdefault(entry.get("port"), entry.get("service"))
+                app_by_port[entry.get("port")] = entry.get("details") or entry.get("service")
+
+    surface: list[dict] = []
+    for port in sorted(set(state_by_port) | set(service_by_port) | set(app_by_port)):
+        state = state_by_port.get(port)
+        service = service_by_port.get(port)
+        application = app_by_port.get(port)
+        observed_open = bool(state) and str(state).startswith("open")
+        if observed_open or service or application:
+            surface.append(
+                {
+                    "port": port,
+                    "protocol": "tcp",
+                    "state": state,
+                    "service": service,
+                    "application_version": application,
+                }
+            )
+    return surface
+
+
 def run_item(item: dict, target: str, raw_root: Path) -> dict:
     method = item["method"]
     name = item["name"]
@@ -905,6 +948,24 @@ def render_summary(execution_result: dict, result_dir: Path) -> str:
             )
         lines.append("")
 
+    surface = execution_result.get("attack_surface") or []
+    if surface:
+        lines.append("## Attack Surface (Observation)")
+        lines.append("")
+        lines.append("| Port | Protocol | State | Service | Application / Version |")
+        lines.append("| --- | --- | --- | --- | --- |")
+        for entry in surface:
+            lines.append(
+                "| {port} | {proto} | {state} | {service} | {app} |".format(
+                    port=entry.get("port", "-"),
+                    proto=entry.get("protocol", "-"),
+                    state=entry.get("state") or "-",
+                    service=entry.get("service") or "-",
+                    app=entry.get("application_version") or "-",
+                )
+            )
+        lines.append("")
+
     lines.append("## Evidence")
     lines.append("")
     for result in execution_result.get("results", []):
@@ -1022,6 +1083,7 @@ def main() -> int:
         results.append(run_item(item, str(config["target"]), raw_root))
     finished_at = iso_local()
     cross_verification = build_cross_verification(results)
+    attack_surface = build_attack_surface(results)
 
     execution_result = {
         "execution_id": execution_id,
@@ -1039,6 +1101,7 @@ def main() -> int:
         "execution_mode": "execute",
         "results": results,
         "cross_verification": cross_verification,
+        "attack_surface": attack_surface,
         "notes": (
             "Execution Result only. Observations are not Pass/Fail, Risk, "
             "Vulnerability, or Finding. Assessment Result is a separate step. "

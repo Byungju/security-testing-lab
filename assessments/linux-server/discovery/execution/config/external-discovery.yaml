@@ -1,0 +1,85 @@
+# External Discovery 통합 실행 Configuration (DO-EXT-001..004)
+# Target: 192.168.216.39 (승인된 테스트 랩 대상)
+#
+# 한 번의 실행으로 External Discovery Objective를 순서대로 수행하고 결과를 통합한다.
+# 실행 순서는 rate-limit 간섭을 줄이기 위해 저부하 타겟 검증을 먼저 수행하고,
+# 공격적 전체 포트 스캔(tcp_scan)을 마지막에 둔다.
+#   icmp          : DO-EXT-001 Reachability
+#   port_reverify : DO-EXT-002 후보 포트 저부하 재확인
+#   service_scan  : DO-EXT-003 Service Identification
+#   version_scan  : DO-EXT-004 Application/Version Identification
+#   tcp_scan      : DO-EXT-002 전체 포트 스캔(공격적, 마지막)
+
+execution_id: ""
+
+objective: "External Discovery (DO-EXT-001..004)"
+test_case: "TC-EXT-001-01, TC-EXT-002-01, TC-EXT-003-01, TC-EXT-004-01"
+procedure: "TP-EXT-001-01, TP-EXT-002-01, TP-EXT-003-01, TP-EXT-004-01"
+
+target: "192.168.216.39"
+target_type: linux-server
+assessment_perspective: external
+
+scope:
+  include:
+    - "192.168.216.39"
+  exclude: []
+
+port_range:
+  start: 1
+  end: 65535
+
+verification_methods:
+  - name: icmp
+    technique: ICMP-based reachability verification
+    tool: ping
+    options: ["-c", "4", "-W", "2"]
+    timeout_seconds: 15
+    enabled: true
+
+  - name: port_reverify
+    technique: TCP port re-verification
+    tool: nmap
+    ports: [22, 23, 512, 513, 514]
+    options: []
+    timeout_seconds: 60
+    enabled: true
+
+  - name: service_scan
+    technique: Network service identification
+    tool: nmap
+    ports: [22, 23, 512, 513, 514]
+    options: ["--version-light"]
+    timeout_seconds: 120
+    enabled: true
+
+  - name: version_scan
+    technique: Application and version identification
+    tool: nmap
+    ports: [22, 23, 512, 513, 514]
+    options: []
+    timeout_seconds: 300
+    enabled: true
+
+  - name: tcp_scan
+    technique: TCP port scanning
+    tool: nmap
+    options:
+      - "-T4"
+      - "--max-retries"
+      - "1"
+      - "--min-rate"
+      - "1000"
+      - "--max-rtt-timeout"
+      - "300ms"
+      - "--initial-rtt-timeout"
+      - "300ms"
+    timeout_seconds: 600
+    enabled: true
+
+evidence:
+  output_dir: results
+
+environment:
+  allowed_tools: [ping, nmap]
+  allow_execution: true
