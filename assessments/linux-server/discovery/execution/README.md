@@ -176,6 +176,34 @@ Evidence에 포함되는 정보: Execution ID, Target, Assessment Perspective, T
 - 실행 결과에 `attack_surface`(포트 중심 통합 관찰)가 포함되고, summary에 `## Attack Surface (Observation)` 섹션이 추가된다.
 - `attack_surface`는 `tcp_scan`/`port_reverify`(상태) + `service_scan`(서비스) + `version_scan`(애플리케이션/버전)을 포트 기준으로 결합한 **관찰**이며, 보안 판단이 아니다.
 
+### Internal Validation 실행 설계 (Configuration 기반 접근)
+
+Internal Validation(DO-INT-001~004)은 대상 내부 상태를 확인해야 하므로 **접근(access) 정보를 Configuration에 정의**한다.
+External 방법은 기존처럼 평가 호스트에서 실행하고, Internal 방법은 `access`의 transport를 통해 대상에서 실행한다.
+
+`access` Schema:
+
+| 필드 | 의미 | 필수 |
+| --- | --- | --- |
+| access.mode | 접근 관점(external / internal) | internal 방법 사용 시 |
+| access.transport | internal 접근 방식(예: ssh) | internal 방법 사용 시 |
+| access.host | 접근 대상 호스트(보통 target) | internal 방법 사용 시 |
+| access.port | 접근 포트(예: 22) | 조건부 |
+| access.username | 접속 계정 | internal 방법 사용 시 |
+| access.auth.method | 인증 방식(agent / key) | internal 방법 사용 시 |
+| access.auth.identity_file | 키 파일 경로(method=key일 때) | 조건부 |
+| access.ssh_options | 추가 SSH 옵션(허용 목록) | 선택 |
+
+설계 원칙:
+
+- **비밀번호/개인키 등 비밀정보는 Configuration에 넣지 않는다.** SSH agent 또는 키 파일 경로만 사용한다.
+- internal 방법은 `access.transport`를 통해 대상에서 실행되며, external 방법과 동일한 규칙(관찰/증적/검증)을 따른다.
+- 내부 실행 결과도 Raw Evidence로 보존하고, Execution Result/Summary에 기록한다.
+- 접근 정보가 없으면 internal 방법은 실행하지 않는다(안전장치).
+- Internal Verification Method(`listening_sockets`, `service_state`, `process_list`, `package_info` 등)는 실제 사용 시점에 최소 추가한다.
+
+예시: `config/internal-access.example.yaml` (placeholder).
+
 - Raw Output은 가능한 한 원본 그대로 보존하고, Verification Method별 디렉터리(`raw/icmp`, `raw/tcp`, `raw/path`)로 남긴다.
 - 기존 Evidence 저장 규칙(`results/<execution_id>/`)을 유지하며, 별도 중복 구조를 만들지 않는다.
 

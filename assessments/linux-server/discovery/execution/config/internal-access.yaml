@@ -1,0 +1,66 @@
+# Internal Validation 실행 Configuration (설계 예시)
+#
+# 주의: 이 파일은 internal 접근을 Configuration으로 정의하기 위한 *설계 예시*이다.
+#       internal Verification Method(listening_sockets 등)의 Runner 구현 전까지는
+#       validate/execute 대상이 아니다.
+#
+# 원칙:
+# - 비밀번호/개인키 등 비밀정보는 Configuration에 넣지 않는다(SSH agent 또는 키 파일 경로만).
+# - internal method는 access.transport를 통해 대상에서 실행된다.
+# - 접근 정보가 없으면 internal 방법은 실행하지 않는다.
+
+execution_id: ""
+
+objective: "Internal Validation (DO-INT-001..004)"
+test_case: "<TC-INT-...>"
+procedure: "<TP-INT-...>"
+
+target: "<TARGET>"
+target_type: linux-server
+assessment_perspective: internal
+
+scope:
+  include:
+    - "<TARGET>"
+  exclude: []
+
+# 내부 접근 정의 (예: SSH)
+access:
+  mode: internal
+  transport: ssh
+  host: "<TARGET>"
+  port: 22
+  username: "<USER>"
+  auth:
+    method: agent            # agent | key
+    identity_file: "<PATH>"  # method=key 일 때 키 파일 경로
+  ssh_options: []
+
+# Internal Verification Methods (설계; Runner 구현 시 최소 추가)
+verification_methods:
+  - name: listening_sockets
+    technique: Listening socket validation
+    tool: ss
+    enabled: false
+
+  - name: service_state
+    technique: Service validation
+    tool: systemctl
+    enabled: false
+
+  - name: process_list
+    technique: Process validation
+    tool: ps
+    enabled: false
+
+  - name: package_info
+    technique: Package and application validation
+    tool: dpkg
+    enabled: false
+
+evidence:
+  output_dir: results
+
+environment:
+  allowed_tools: [ss, systemctl, ps, dpkg]
+  allow_execution: false
